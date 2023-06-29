@@ -51,9 +51,9 @@ class auth_plugin_cmoffice extends auth_plugin_base {
 			//dk=2000
 			$redirecttodakora = optional_param('dk', '0', PARAM_INT);
             if ($redirecttodakora==2000) {
-                $dakoraUrl = $CFG->wwwroot . '/blocks/exacomp/applogin.php?action=dakora_sso&sesskey=' . sesskey(); // FIXME: unused?
-                //redirect($CFG->wwwroot);
-				redirect ("https://skillswork.info/dakora-plus/login?moodle_url=".$CFG->wwwroot);
+                //$dakoraUrl = $CFG->wwwroot . '/blocks/exacomp/applogin.php?action=dakora_sso&sesskey=' . sesskey(); // FIXME: unused?
+
+				redirect ("https://skillswork.info/dakora-plus/login?do_login=true&moodle_url=".$CFG->wwwroot);
             } else {
                 //redirect ("https://skillswork.info/dakora-plus");
                 redirect($CFG->wwwroot); //by stefan: I uncommented this again, since otherwise it will not work as intended locally
@@ -87,7 +87,7 @@ class auth_plugin_cmoffice extends auth_plugin_base {
             $this->retrieve_typo3_session_param();
             if(empty($this->typo3SessionId)) {
 				
-				if ($_SERVER["HTTP_REFERER"] == $CFG->wwwroot."/my/"){
+				if ($_SERVER["HTTP_REFERER"] == $CFG->wwwroot."/my/"){  //logout, keine Fehlermeldung, sondern nur Info anzeigen
 					$this->showInfo(get_string('auth_cmoffice:info_msg_gotologin', 'auth_cmoffice'), 3435);
 				}else{
 					$this->showError(get_string('auth_cmoffice:error_msg_notauthenticated', 'auth_cmoffice'), 3431);
@@ -137,6 +137,12 @@ class auth_plugin_cmoffice extends auth_plugin_base {
         $typo3UserName = clean_param($this->retrieve_typo3_username($authdb, $this->typo3SessionId), PARAM_ALPHANUMEXT);
         $uidMappingRecord = $this->get_uid_mapping($DB, $typo3UserID); // lookup internal Typo3/Moodle UID Mapping
 
+		if (!$uidMappingRecord)  {
+			if ($this->check_if_user_is_created_from_webservice($DB, $typo3UserID,$typo3UserName,$remoteTypo3FolderSlug)){
+				$uidMappingRecord = $this->get_uid_mapping($DB, $typo3UserID); 
+			}
+		}
+		
         $moodleUserID = false;
         if($uidMappingRecord) {
             // there is an entry with a matching Typo3 UID, therefore we verify the slug
@@ -465,6 +471,19 @@ class auth_plugin_cmoffice extends auth_plugin_base {
         $uidMappingRecord->t3_slug = $t3FolderSlug;
 
         return $DB->insert_record("auth_cmoffice", $uidMappingRecord);
+    }
+	
+	private function check_if_user_is_created_from_webservice(moodle_database $DB, int $typo3UID, string $typo3UserName, string $typo3FolderSlug) : stdClass|bool {
+		$mdlUser = $DB->get_record("user", ['idnumber'  => $typo3UID, 'username' => $typo3UserName], '*', IGNORE_MISSING);
+		if ($mdlUser) {
+			$newMapping = $this->create_uid_mapping($DB, $typo3UID, $typo3FolderSlug, $mdlUser);
+			$userupdate = new stdClass();
+			$userupdate->id = $mdlUser->id; 
+			$userupdate->auth = 'cmoffice';  // The field and the new value that you want to update.
+			$DB->update_record('user', $userupdate);
+			return true;
+		}
+        return false;
     }
 
     private function showError(string $msg, int $errorCode): void {

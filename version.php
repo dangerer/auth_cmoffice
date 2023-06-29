@@ -24,6 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2022123001;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2023062200;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2022041200;        // Requires this Moodle version.
 $plugin->component = 'auth_cmoffice';       // Full name of the plugin (used for diagnostics)
