@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="auth/cmoffice/db" VERSION="20221118" COMMENT="XMLDB file for Moodle auth/cmoffice"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="auth_cmoffice" COMMENT="Default comment for auth_cmoffice, please edit me">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="t3_uid" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="Typo3 user ID (table 'fe_users', field uid)"/>
+        <FIELD NAME="mdl_uid" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="internal Moodle user ID"/>
+        <FIELD NAME="t3_slug" TYPE="char" LENGTH="1333" NOTNULL="true" SEQUENCE="false" COMMENT="Typo3 Folder (slug) containing the relevant user Records, see table &quot;pages&quot; field &quot;slug&quot;."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_mdl_uid" TYPE="foreign" FIELDS="mdl_uid" REFTABLE="user" REFFIELDS="id" COMMENT="Foreign key for the internal Moodle user ID"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
