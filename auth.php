@@ -97,6 +97,7 @@ class auth_plugin_cmoffice extends auth_plugin_base {
 
             $moodleUserID = $this->get_moodle_uid_by_typo_3_token($DB, $this->typo3SessionId, true);
             $this->typo3SessionId = null; // we no longer need this value, dispose it
+			//echo  $moodleUserID;die;
             if(!$moodleUserID || !$this->exists_user_by_id($moodleUserID)) {
                 $this->showError(get_string("auth_cmoffice:error_msg_unknownuser", 'auth_cmoffice'), 3432);
                 return;
@@ -116,6 +117,7 @@ class auth_plugin_cmoffice extends auth_plugin_base {
 
     private function get_moodle_uid_by_typo_3_token(moodle_database $DB, string $t3sid, bool $createUser=false) : bool|int {
         $authdb = $this->connect_to_typo3_db();
+		//echo $t3sid."---";die;
         if(!$authdb || !$authdb->IsConnected()) {
             $this->showError(get_string('auth_cmoffice:error_msg_dbconnection', 'auth_cmoffice'), 3434);
             return false;
@@ -123,7 +125,7 @@ class auth_plugin_cmoffice extends auth_plugin_base {
 
         $localMoodleFolderSlug = $this->get_moodle_config_typo3_folder_slug();
         $remoteTypo3FolderSlug = $this->retrieve_typo3_folder_slug($authdb, $this->typo3SessionId);
-
+//echo $localMoodleFolderSlug."--".$remoteTypo3FolderSlug;die;
         if($remoteTypo3FolderSlug!=="superadmin" && //some admin users who are in typo3 folder superadmin should have access to all moodles (added by Dietmar Angerer)
             (empty($remoteTypo3FolderSlug) || $remoteTypo3FolderSlug !== $localMoodleFolderSlug)) {
             // more/less than one t3sid is not allowed, unless a user belongs to the superadmin Folder
@@ -374,7 +376,7 @@ class auth_plugin_cmoffice extends auth_plugin_base {
         require_once($CFG->libdir.'/adodb/adodb.inc.php');
 
         // Connect to the external database (forcing new connection).
-
+//echo $this->config->config_db_driver;die;
         $authdb = ADONewConnection($this->config->config_db_driver);
         if(!$authdb) {
             $this->showError(get_string('auth_cmoffice:error_msg_dbconnection', 'auth_cmoffice'), 3430);
@@ -387,10 +389,16 @@ class auth_plugin_cmoffice extends auth_plugin_base {
         if(!empty($this->config->config_db_port)) {
             $authdb->port = $this->config->config_db_port;
         }
+		//echo $this->config->config_db_host;die;
         $dbuser = $this->config->config_db_user ?: $CFG->dbuser;
         $dbpass = $this->config->config_db_pass ?: $CFG->dbpass;
 
-        $authdb->Connect($this->config->config_db_host, $dbuser, $dbpass, $this->config->config_db_name, true);
+if(!$authdb->Connect($this->config->config_db_host, $dbuser, $dbpass, $this->config->config_db_name, true)) {
+            $this->showError(get_string('auth_cmoffice:error_msg_dbconnection', 'auth_cmoffice'), 3430);
+            return false;
+        }
+		
+        
         $authdb->SetFetchMode(ADODB_FETCH_ASSOC);
 
         return $authdb;
